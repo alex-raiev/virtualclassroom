@@ -20,6 +20,7 @@ namespace VirtualClassroom.NET
 
         private ClassSessionList _classSessionList;
         private string basicUrl = Properties.Settings.Default.DataServerUrl;
+        private string dataServerAuthKey = Properties.Settings.Default.VCAuth;
         private string appKey = Properties.Settings.Default.AppKey;
         private string appSecret = Properties.Settings.Default.AppSecret;
 
@@ -196,7 +197,7 @@ namespace VirtualClassroom.NET
 
             using (var client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Add("VC-AUTH", "agni-1");
+                client.DefaultRequestHeaders.Add("VC-AUTH", dataServerAuthKey);
 
                 var result = await client.GetAsync(basicUrl + "/test/class-sessions-today");
                 if (result.StatusCode != HttpStatusCode.OK)
@@ -246,18 +247,42 @@ namespace VirtualClassroom.NET
                 {
                     _dataService.AddSession(item);
 
-                    var meetingDetails = _meetingService.CreateMeeting(item.CourseSection, item.FromTime, 60, item.Timezone).Result;
-                    
-                    // Link sessions to meetings
-                    meetingDetails.SessionId = item.Id;
-   
-                    _dataService.AddMeeting(meetingDetails);
-
                     AddToLog($"Added session with id: {item.Id}.", LogType.Info);
+
+                    try
+                    {
+                        var meetingDetails = _meetingService.CreateMeeting(item.CourseSection, item.FromTime, 60, item.Timezone).Result;
+
+                        // Link sessions to meetings
+                        meetingDetails.SessionId = item.Id;
+
+                        _dataService.AddMeeting(meetingDetails);
+
+                        AddToLog($"Meeting created and saved: {meetingDetails.MeetingId}.", LogType.Info);
+                    }
+                    catch (Exception e)
+                    {
+                        AddToLog(e.Message, LogType.Exception);
+                    }
                 }
                 else
                 {
                     _dataService.UpdateSession(item);
+
+                    var meetingDb = _dataService.GetMeeting(item.Id);
+                    if (meetingDb == null)
+                    {
+
+                        var meetingDetails = _meetingService.CreateMeeting(item.CourseSection, item.FromTime, 60, item.Timezone).Result;
+
+                        // Link sessions to meetings
+                        meetingDetails.SessionId = item.Id;
+
+                        _dataService.AddMeeting(meetingDetails);
+
+                        AddToLog($"Meeting created and saved: {meetingDetails.MeetingId}.", LogType.Info);
+                    }
+
                     AddToLog($"Updated session with id: {item.Id}", LogType.Info);
                 }
             }
@@ -268,11 +293,11 @@ namespace VirtualClassroom.NET
             var upcomingSession = _dataService.GetUpcomingSession();
             if (upcomingSession != null)
             {
-                AddToLog("Found upcoming meeting. Joining...", LogType.Info);
-
                 var meetingDetails = _dataService.GetMeeting(upcomingSession.Id);
                 if (meetingDetails != null)
                 {
+                    AddToLog("Found upcoming meeting. Joining...", LogType.Info);
+
                     JoinMeeting(meetingDetails.MeetingId, meetingDetails.PassCode, meetingDetails.LoginName);
                 }
             }

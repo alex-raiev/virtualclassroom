@@ -17,14 +17,14 @@ namespace VirtualClassroom.NET.Services
                 {
                     start_time = startTime,
                     duration,
-                    password = "00000000",
+                    password = "0000000",
                     timezone
                     //TODO: add settings object: recording, video, audio
                 };
                 var json = JsonConvert.SerializeObject(data);
                 var content = new StringContent(json);
 
-                var result = await client.PostAsync(basicZoomUrl + "/users/me/meetings", content);
+               // var result = await client.PostAsync(basicZoomUrl + "/users/me/meetings", content);
 
                 // TODO: process result of Meeting Creation request
 
@@ -32,7 +32,7 @@ namespace VirtualClassroom.NET.Services
                 {
                     MeetingId = 5670052168,
                     LoginName = "Temp Login Name",
-                    PassCode = "00000000"
+                    PassCode = "0000000"
                 };
             }
         }

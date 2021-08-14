@@ -43,7 +43,13 @@ namespace VirtualClassroom.NET.Services
         {
             using (var db = new LiteDatabase(dbFileName))
             {
+
                 var collection = db.GetCollection<ClassSession>(sessions);
+
+                //var sessionDb = collection.Query().Where(i => i.Id == item.Id);
+                //if(sessionDb!= null)
+                //    return;
+                
                 collection.Insert(item);
             }
         }
@@ -62,7 +68,17 @@ namespace VirtualClassroom.NET.Services
             using (var db = new LiteDatabase(dbFileName))
             {
                 var collection = db.GetCollection<MeetingDetails>(meetings);
-                collection.Update(item);
+
+                var meetingDb = collection.Query().Where(i => i.SessionId == item.SessionId).FirstOrDefault();
+
+                if (meetingDb != null)
+                {
+                    collection.Update(item);
+                }
+                else
+                {
+                    collection.Insert(item);
+                }
             }
         }
         public MeetingDetails GetMeeting(int sessionId)
