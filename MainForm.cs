@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Windows.Forms;
 using Newtonsoft.Json;
 using VirtualClassroom.NET.Model;
@@ -19,12 +20,12 @@ namespace VirtualClassroom.NET
         private readonly MeetingService _meetingService;
 
         private ClassSessionList _classSessionList;
-        private string basicUrl = Properties.Settings.Default.DataServerUrl;
-        private string dataServerAuthKey = Properties.Settings.Default.VCAuth;
+     
         private string appKey = Properties.Settings.Default.AppKey;
         private string appSecret = Properties.Settings.Default.AppSecret;
 
         private bool _isOnMeetingNow;
+        private MeetingDetails _currentMeeting;
 
         public MainForm()
         {
@@ -92,6 +93,17 @@ namespace VirtualClassroom.NET
             }
         }
 
+        private void LeaveMeeting()
+        {
+            if (_isOnMeetingNow)
+            {
+                var err = CZoomSDKeDotNetWrap.Instance.GetMeetingServiceWrap().Leave(LeaveMeetingCmd.LEAVE_MEETING);
+                if (SDKError.SDKERR_SUCCESS != err)
+                {
+                    AddToLog($"Error when ending meeting. {err}", LogType.Error);
+                }
+            }
+        }
 
         private void btnManualStart_Click(object sender, EventArgs e)
         {
@@ -192,35 +204,22 @@ namespace VirtualClassroom.NET
         {
             if (_isOnMeetingNow)
             {
+                StopMeeting();
+
                 return;
             }
 
-            using (var client = new HttpClient())
+            _classSessionList = await _meetingService.GetCurrentSessions();
+
+            if (_classSessionList.ClassSessions.Any())
             {
-                client.DefaultRequestHeaders.Add("VC-AUTH", dataServerAuthKey);
+                AddToLog("Polling class session info...", LogType.Info);
 
-                var result = await client.GetAsync(basicUrl + "/test/class-sessions-today");
-                if (result.StatusCode != HttpStatusCode.OK)
-                {
-                    AddToLog($"Error when request class sessions list: {result.StatusCode}", LogType.Error);
-                }
-                else
-                {
-                    var json = await result.Content.ReadAsStringAsync();
-
-                    _classSessionList = JsonConvert.DeserializeObject<ClassSessionList>(json);
-
-                    if(_classSessionList.ClassSessions.Any())
-                    {
-                        AddToLog("Polling class session info...", LogType.Info);
-
-                        UpdateClassSessions(_classSessionList.ClassSessions);
-                    }
-                    else
-                    {
-                        AddToLog("No schedule at the moment.", LogType.Info);
-                    }
-                }
+                UpdateClassSessions(_classSessionList.ClassSessions);
+            }
+            else
+            {
+                AddToLog("No schedule at the moment.", LogType.Info);
             }
 
             StartMeeting();
@@ -300,6 +299,23 @@ namespace VirtualClassroom.NET
 
                     JoinMeeting(meetingDetails.MeetingId, meetingDetails.PassCode, meetingDetails.LoginName);
                 }
+            }
+        }
+
+        private void StopMeeting()
+        {
+            var endingSession = _dataService.GetEndingSession();
+            if (endingSession != null)
+            {
+                AddToLog("Leaving meeting", LogType.Info);
+
+                // TODO: for DEBUG purposes only
+                for (int i = 0; i < 10; i++)
+                {
+                    Thread.Sleep(1000);
+                }
+
+                LeaveMeeting();
             }
         }
 

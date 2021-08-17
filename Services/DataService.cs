@@ -30,13 +30,43 @@ namespace VirtualClassroom.NET.Services
             {
                 var data = db.GetCollection<ClassSession>(sessions);
 
-                // TODO: uncomment when data-server will be able provide normal schedule
-                //return data.Query()
-                //    .Where(i => (DateTime.Now - i.FromTime).TotalMinutes < 10 )
-                //    .SingleOrDefault();
+                //TODO: commented for DEBUG 
+                //var time1 = DateTime.Now.AddMinutes(-5);
+                //var time2 = DateTime.Now.AddMinutes(5);
+                var time1 = new DateTime(2021, 8, 17, 9, 25, 0);
+                var time2 = new DateTime(2021, 8, 17, 9, 35, 0);
 
-                return data.Query().FirstOrDefault();
+                // TODO: uncomment when data-server will be able provide normal schedule
+                var result = data.Query()
+                    .Where(i => i.FromTime > time1 && i.FromTime < time2)
+                    .SingleOrDefault();
+
+                return result;
+                //return data.Query().FirstOrDefault();
             }
+        }
+
+        public ClassSession GetEndingSession()
+        {
+            using (var db = new LiteDatabase(dbFileName))
+            {
+                var data = db.GetCollection<ClassSession>(sessions);
+
+                //TODO: commented for DEBUG 
+                //var time1 = DateTime.Now.AddMinutes(-5);
+                //var time2 = DateTime.Now.AddMinutes(5);
+                var time1 = new DateTime(2021, 8, 17, 9, 50, 0);
+                var time2 = new DateTime(2021, 8, 17, 10, 5, 0);
+
+                // TODO: uncomment when data-server will be able provide normal schedule
+                var result = data.Query()
+                    .Where(i => i.ToTime > time1 && i.ToTime < time2)
+                    .SingleOrDefault();
+
+                return result;
+                //return data.Query().FirstOrDefault();
+            }
+
         }
 
         public void AddSession(ClassSession item)
