@@ -211,7 +211,7 @@ namespace VirtualClassroom.NET
 
             _classSessionList = await _meetingService.GetCurrentSessions();
 
-            if (_classSessionList.ClassSessions.Any())
+            if (_classSessionList.ClassSessions.Any(/*s => s.FromTime >=DateTime.Now.AddHours(-1)*/))
             {
                 AddToLog("Polling class session info...", LogType.Info);
 
@@ -225,19 +225,12 @@ namespace VirtualClassroom.NET
             StartMeeting();
         }
 
-        //bool IsComing(DateTime value1, DateTime value2)
-        //{
-        //    var timeSpan = (value1 - value2).TotalMinutes;
-
-        //    return timeSpan < 10;
-        //}
-
         private void btnExit_Click(object sender, EventArgs e)
         {
             Application.Exit();
         }
 
-        private void UpdateClassSessions(List<ClassSession> newItems)
+        private async void UpdateClassSessions(List<ClassSession> newItems)
         {
             foreach (var item in newItems)
             {
@@ -248,14 +241,27 @@ namespace VirtualClassroom.NET
 
                     AddToLog($"Added session with id: {item.Id}.", LogType.Info);
 
+                }
+                else
+                {
+                    _dataService.UpdateSession(item);
+
+                    AddToLog($"Updated session with id: {item.Id}", LogType.Info);
+                }
+
+                var meetingDb = _dataService.GetMeeting(item.Id);
+                if (meetingDb == null)
+                {
                     try
                     {
-                        var meetingDetails = _meetingService.CreateMeeting(item.CourseSection, item.FromTime, 60, item.Timezone).Result;
+                        var meetingDetails = await _meetingService.CreateMeeting(item);
 
                         // Link sessions to meetings
                         meetingDetails.SessionId = item.Id;
 
                         _dataService.AddMeeting(meetingDetails);
+
+                        await _meetingService.SendMeetingToDataserver(meetingDetails, item);
 
                         AddToLog($"Meeting created and saved: {meetingDetails.MeetingId}.", LogType.Info);
                     }
@@ -266,23 +272,7 @@ namespace VirtualClassroom.NET
                 }
                 else
                 {
-                    _dataService.UpdateSession(item);
-
-                    var meetingDb = _dataService.GetMeeting(item.Id);
-                    if (meetingDb == null)
-                    {
-
-                        var meetingDetails = _meetingService.CreateMeeting(item.CourseSection, item.FromTime, 60, item.Timezone).Result;
-
-                        // Link sessions to meetings
-                        meetingDetails.SessionId = item.Id;
-
-                        _dataService.AddMeeting(meetingDetails);
-
-                        AddToLog($"Meeting created and saved: {meetingDetails.MeetingId}.", LogType.Info);
-                    }
-
-                    AddToLog($"Updated session with id: {item.Id}", LogType.Info);
+                    //todo: check if schedule changed and correct zoom meeting start time and duration
                 }
             }
         }
@@ -309,11 +299,11 @@ namespace VirtualClassroom.NET
             {
                 AddToLog("Leaving meeting", LogType.Info);
 
-                // TODO: for DEBUG purposes only
-                for (int i = 0; i < 10; i++)
-                {
-                    Thread.Sleep(1000);
-                }
+                //// TODO: for DEBUG purposes only
+                //for (int i = 0; i < 10; i++)
+                //{
+                //    Thread.Sleep(1000);
+                //}
 
                 LeaveMeeting();
             }

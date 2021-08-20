@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using VirtualClassroom.NET.Model;
@@ -13,9 +15,9 @@ namespace VirtualClassroom.NET.Services
         private readonly string zoomApiKey = Properties.Settings.Default.ZoomApiKey;
         private string dataServerUrl = Properties.Settings.Default.DataServerUrl;
         private string dataServerAuthKey = Properties.Settings.Default.VCAuth;
+        private string scheduleFor = Properties.Settings.Default.ScheduleFor;
 
         private DataService _dataService;
-
 
         public MeetingService()
         {
@@ -23,20 +25,23 @@ namespace VirtualClassroom.NET.Services
 
         }
 
-        public async Task<MeetingDetails> CreateMeeting(string name, DateTime startTime, int duration, string timezone)
+        public async Task<MeetingDetails> CreateMeeting(ClassSession session)
         {
             var data = new
             {
-                start_time = startTime,
-                duration,
-                password = "0000000",
-                timezone
-                //TODO: add settings object: recording, video, audio
+                start_time = session.FromTime,
+                type = 1,
+                schedule_for = scheduleFor,
+                duration = (session.ToTime - session.FromTime).TotalMinutes,
+                //password = "999999999",
+                timezone = session.Timezone,
+                topic = session.FacultyName,
+                agenda= session.CourseSection
             };
-            var json = JsonConvert.SerializeObject(data);
-            
 
-            //var res = await ZoomApiRequest("/users/me/meetings", json);
+            var json = JsonConvert.SerializeObject(data);
+
+            var res = await ZoomApiRequest("/users/me/meetings", json);
 
             // TODO: process result of Meeting Creation request
 
@@ -44,7 +49,8 @@ namespace VirtualClassroom.NET.Services
             {
                 MeetingId = 5670052168,
                 LoginName = "Temp Login Name",
-                PassCode = "0000000"
+                PassCode = "0000000",
+                Url = ""
             };
         }
 
@@ -75,35 +81,38 @@ namespace VirtualClassroom.NET.Services
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(dataServerUrl);
+                client.DefaultRequestHeaders
+                    .Add("VC-AUTH", dataServerAuthKey);
 
                 var data = new
                 {
-                    from_time = session.FromTime,
-                    to_time = session.ToTime,
+                    class_session_id = session.Id,
+                    from_time = $"{session.FromTime:yyyy-MM-ddThh:mm}",
+                    to_time = $"{session.ToTime:yyyy-MM-ddThh:mm}",
                     timezone = session.Timezone,
-                    //"faculty_name"
-                    //"faculty_email"
-                    //"meeting_id"
-                    //"join_url"
-                    //"start_url"
-                    //"recording"
-                    //"class_type"
+                    faculty_name = session.FacultyName,
+                    faculty_email = session.FacultyEmail,
+                    meeting_id = meeting.MeetingId,
+                    join_url = meeting.Url,
+                    start_url = meeting.Url,
+                    recording = session.Recording,
+                    class_mode = session.ClassMode,
+                    course_code = session.CourseCode,
+                    course_term = session.CourseTerm,
+                    course_section = session.CourseSection,
+                    venue = session.Venue
                 };
 
                 var json = JsonConvert.SerializeObject(data);
-                var content = new StringContent(json);
-
-                HttpResponseMessage response = await client.PutAsync("/zoom/register-class-session", content);
                 
-                //if (response.IsSuccessStatusCode)
-                //{
-                //    return response.Content.ReadAsStringAsync().Result;
-                //}
-                //else
-                //{
-                //    return null;
-                //}
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                
+                HttpResponseMessage response = await client.PostAsync(dataServerUrl + "/zoom/register-class-session", content);
 
+                if (!response.IsSuccessStatusCode)
+                {
+                    _dataService.AddLog("Error when sending meeting details: " + response.ReasonPhrase, LogType.Error);
+                }
             }
         }
 
@@ -112,9 +121,15 @@ namespace VirtualClassroom.NET.Services
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(basicZoomApiUrl);
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + zoomApiKey);
+                
+                client.DefaultRequestHeaders
+                    .Accept
+                    .Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                var content = new StringContent(body);
+                client.DefaultRequestHeaders
+                    .Add("Authorization", "Bearer " + zoomApiKey);
+
+                var content = new StringContent(body, Encoding.UTF8, "application/json");
 
                 HttpResponseMessage response = await client.PostAsync(query, content);
                 if (response.IsSuccessStatusCode)

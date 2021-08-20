@@ -24,6 +24,9 @@ namespace VirtualClassroom.NET.Model
         public DateTime FromTime { get; set; }
         [JsonProperty("to_time")]
         public DateTime ToTime { get; set; }
+        public string Recording { get; set; }
+        [JsonProperty("class_mode")]
+        public string ClassMode { get; set; }
     }
 
     public class ClassSessionList

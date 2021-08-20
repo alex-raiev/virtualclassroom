@@ -9,16 +9,18 @@ namespace VirtualClassroom.NET.Services
 {
     public class DataService
     {
-        private string dbFileName = "vcr.data";
-        private string sessions = "sessions";
-        private string meetings = "meetings";
-        private string logs = "log";
+        private int m_preStartThreshold = Properties.Settings.Default.PreStartThreshold;
+        private int m_reconnectThreshold = Properties.Settings.Default.ReconnectThreshold;
+        private string m_dbFileName = "vcr.data";
+        private string m_sessions = "m_sessions";
+        private string m_meetings = "m_meetings";
+        private string m_logs = "log";
         
         public ClassSession Get(int id)
         {
-            using (var db = new LiteDatabase(dbFileName))
+            using (var db = new LiteDatabase(m_dbFileName))
             {
-                var data = db.GetCollection<ClassSession>(sessions);
+                var data = db.GetCollection<ClassSession>(m_sessions);
 
                 return data.Query().Where(i => i.Id == id).SingleOrDefault();
             }
@@ -26,78 +28,64 @@ namespace VirtualClassroom.NET.Services
 
         public ClassSession GetUpcomingSession()
         {
-            using (var db = new LiteDatabase(dbFileName))
+            using (var db = new LiteDatabase(m_dbFileName))
             {
-                var data = db.GetCollection<ClassSession>(sessions);
-
-                //TODO: commented for DEBUG 
-                //var time1 = DateTime.Now.AddMinutes(-5);
-                //var time2 = DateTime.Now.AddMinutes(5);
-                var time1 = new DateTime(2021, 8, 17, 9, 25, 0);
-                var time2 = new DateTime(2021, 8, 17, 9, 35, 0);
-
-                // TODO: uncomment when data-server will be able provide normal schedule
+                var data = db.GetCollection<ClassSession>(m_sessions);
+                
+                var time1 = DateTime.Now.AddMinutes(-m_preStartThreshold);
+                var time2 = DateTime.Now.AddMinutes(m_reconnectThreshold);
+                
                 var result = data.Query()
                     .Where(i => i.FromTime > time1 && i.FromTime < time2)
                     .SingleOrDefault();
 
                 return result;
-                //return data.Query().FirstOrDefault();
             }
         }
 
         public ClassSession GetEndingSession()
         {
-            using (var db = new LiteDatabase(dbFileName))
+            using (var db = new LiteDatabase(m_dbFileName))
             {
-                var data = db.GetCollection<ClassSession>(sessions);
-
-                //TODO: commented for DEBUG 
-                //var time1 = DateTime.Now.AddMinutes(-5);
-                //var time2 = DateTime.Now.AddMinutes(5);
-                var time1 = new DateTime(2021, 8, 17, 9, 50, 0);
-                var time2 = new DateTime(2021, 8, 17, 10, 5, 0);
-
-                // TODO: uncomment when data-server will be able provide normal schedule
+                var data = db.GetCollection<ClassSession>(m_sessions);
+                
+                var time1 = DateTime.Now.AddMinutes(-m_preStartThreshold);
+                var time2 = DateTime.Now.AddMinutes(m_reconnectThreshold);
+                
                 var result = data.Query()
                     .Where(i => i.ToTime > time1 && i.ToTime < time2)
                     .SingleOrDefault();
 
                 return result;
-                //return data.Query().FirstOrDefault();
             }
 
         }
 
         public void AddSession(ClassSession item)
         {
-            using (var db = new LiteDatabase(dbFileName))
+            using (var db = new LiteDatabase(m_dbFileName))
             {
 
-                var collection = db.GetCollection<ClassSession>(sessions);
+                var collection = db.GetCollection<ClassSession>(m_sessions);
 
-                //var sessionDb = collection.Query().Where(i => i.Id == item.Id);
-                //if(sessionDb!= null)
-                //    return;
-                
                 collection.Insert(item);
             }
         }
 
         public void UpdateSession(ClassSession item)
         {
-            using (var db = new LiteDatabase(dbFileName))
+            using (var db = new LiteDatabase(m_dbFileName))
             {
-                var collection = db.GetCollection<ClassSession>(sessions);
+                var collection = db.GetCollection<ClassSession>(m_sessions);
                 collection.Update(item);
             }
         }
 
         public void AddMeeting(MeetingDetails item)
         {
-            using (var db = new LiteDatabase(dbFileName))
+            using (var db = new LiteDatabase(m_dbFileName))
             {
-                var collection = db.GetCollection<MeetingDetails>(meetings);
+                var collection = db.GetCollection<MeetingDetails>(m_meetings);
 
                 var meetingDb = collection.Query().Where(i => i.SessionId == item.SessionId).FirstOrDefault();
 
@@ -113,9 +101,9 @@ namespace VirtualClassroom.NET.Services
         }
         public MeetingDetails GetMeeting(int sessionId)
         {
-            using (var db = new LiteDatabase(dbFileName))
+            using (var db = new LiteDatabase(m_dbFileName))
             {
-                var data = db.GetCollection<MeetingDetails>(meetings);
+                var data = db.GetCollection<MeetingDetails>(m_meetings);
 
                 return data.Query().Where(i => i.SessionId == sessionId).SingleOrDefault();
             }
@@ -123,9 +111,9 @@ namespace VirtualClassroom.NET.Services
 
         public List<string> GetLog()
         {
-            using (var db = new LiteDatabase(dbFileName))
+            using (var db = new LiteDatabase(m_dbFileName))
             {
-                var log = db.GetCollection<LogItem>(logs)
+                var log = db.GetCollection<LogItem>(m_logs)
                     .Query()
                     .OrderByDescending(i => i.Time)
                     .ToList();
@@ -138,9 +126,9 @@ namespace VirtualClassroom.NET.Services
 
         public void AddLog(string message, LogType type)
         {
-            using (var db = new LiteDatabase(dbFileName))
+            using (var db = new LiteDatabase(m_dbFileName))
             {
-                var log = db.GetCollection<LogItem>(logs);
+                var log = db.GetCollection<LogItem>(m_logs);
                 log.Insert(new LogItem
                 {
                     Message = message,
