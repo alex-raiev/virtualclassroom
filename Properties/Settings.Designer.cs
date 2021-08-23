@@ -25,7 +25,7 @@ namespace VirtualClassroom.NET.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://vc.staging.dsjkeeplearning.com/")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string DataServerUrl {
             get {
                 return ((string)(this["DataServerUrl"]));
@@ -68,6 +68,78 @@ namespace VirtualClassroom.NET.Properties {
             }
             set {
                 this["AppSecret"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string VCAuth {
+            get {
+                return ((string)(this["VCAuth"]));
+            }
+            set {
+                this["VCAuth"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ZoomApiKey {
+            get {
+                return ((string)(this["ZoomApiKey"]));
+            }
+            set {
+                this["ZoomApiKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ZoomApiUrl {
+            get {
+                return ((string)(this["ZoomApiUrl"]));
+            }
+            set {
+                this["ZoomApiUrl"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5")]
+        public int PreStartThreshold {
+            get {
+                return ((int)(this["PreStartThreshold"]));
+            }
+            set {
+                this["PreStartThreshold"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("15")]
+        public int ReconnectThreshold {
+            get {
+                return ((int)(this["ReconnectThreshold"]));
+            }
+            set {
+                this["ReconnectThreshold"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string BR {
+            get {
+                return ((string)(this["BR"]));
+            }
+            set {
+                this["BR"] = value;
             }
         }
     }

@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="DataServerUrl" Type="System.String" Scope="User">
-      <Value Profile="(Default)">http://vc.staging.dsjkeeplearning.com/</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="PollingInterval" Type="System.String" Scope="User">
       <Value Profile="(Default)">1</Value>
@@ -12,6 +12,24 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="AppSecret" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="VCAuth" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ZoomApiKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ZoomApiUrl" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="PreStartThreshold" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">5</Value>
+    </Setting>
+    <Setting Name="ReconnectThreshold" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">15</Value>
+    </Setting>
+    <Setting Name="BR" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
   </Settings>

@@ -15,7 +15,7 @@ namespace VirtualClassroom.NET.Services
         private readonly string zoomApiKey = Properties.Settings.Default.ZoomApiKey;
         private string dataServerUrl = Properties.Settings.Default.DataServerUrl;
         private string dataServerAuthKey = Properties.Settings.Default.VCAuth;
-        private string scheduleFor = Properties.Settings.Default.ScheduleFor;
+        private string scheduleFor = Properties.Settings.Default.BR;
 
         private DataService _dataService;
 
@@ -33,7 +33,6 @@ namespace VirtualClassroom.NET.Services
                 type = 1,
                 schedule_for = scheduleFor,
                 duration = (session.ToTime - session.FromTime).TotalMinutes,
-                //password = "999999999",
                 timezone = session.Timezone,
                 topic = session.FacultyName,
                 agenda= session.CourseSection
@@ -43,15 +42,14 @@ namespace VirtualClassroom.NET.Services
 
             var res = await ZoomApiRequest("/users/me/meetings", json);
 
-            // TODO: process result of Meeting Creation request
+            var meeting = JsonConvert.DeserializeObject<MeetingDetails>(res);
 
-            return new MeetingDetails
+            if (meeting != null)
             {
-                MeetingId = 5670052168,
-                LoginName = "Temp Login Name",
-                PassCode = "0000000",
-                Url = ""
-            };
+                meeting.SessionId = session.Id;
+            }
+
+            return meeting;
         }
 
 
@@ -93,8 +91,8 @@ namespace VirtualClassroom.NET.Services
                     faculty_name = session.FacultyName,
                     faculty_email = session.FacultyEmail,
                     meeting_id = meeting.MeetingId,
-                    join_url = meeting.Url,
-                    start_url = meeting.Url,
+                    join_url = meeting.JoinUrl,
+                    start_url = meeting.StartUrl,
                     recording = session.Recording,
                     class_mode = session.ClassMode,
                     course_code = session.CourseCode,
@@ -131,7 +129,7 @@ namespace VirtualClassroom.NET.Services
 
                 var content = new StringContent(body, Encoding.UTF8, "application/json");
 
-                HttpResponseMessage response = await client.PostAsync(query, content);
+                HttpResponseMessage response = await client.PostAsync(basicZoomApiUrl + query, content);
                 if (response.IsSuccessStatusCode)
                 {
                     return response.Content.ReadAsStringAsync().Result;

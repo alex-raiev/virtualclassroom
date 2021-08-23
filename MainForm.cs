@@ -211,11 +211,13 @@ namespace VirtualClassroom.NET
 
             _classSessionList = await _meetingService.GetCurrentSessions();
 
-            if (_classSessionList.ClassSessions.Any(/*s => s.FromTime >=DateTime.Now.AddHours(-1)*/))
+            if (_classSessionList.ClassSessions.Any())
             {
                 AddToLog("Polling class session info...", LogType.Info);
 
-                UpdateClassSessions(_classSessionList.ClassSessions);
+                var actualSessions = _classSessionList.ClassSessions.Where(s => s.FromTime >= DateTime.Now.AddMinutes(-15)).ToList();
+
+                UpdateClassSessions(actualSessions);
             }
             else
             {
@@ -298,12 +300,6 @@ namespace VirtualClassroom.NET
             if (endingSession != null)
             {
                 AddToLog("Leaving meeting", LogType.Info);
-
-                //// TODO: for DEBUG purposes only
-                //for (int i = 0; i < 10; i++)
-                //{
-                //    Thread.Sleep(1000);
-                //}
 
                 LeaveMeeting();
             }
